@@ -30,9 +30,9 @@ public class Zad_4 : MonoBehaviour
         // wykonujemy przesunięcie Rigidbody z uwzględnieniem sił fizycznych
         rb.MovePosition(transform.position + velocity);
     }
-         void OnCollisionEnter(Collision obj)
-    { //https://docs.unity3d.com/ScriptReference/Collider.OnCollisionEnter.html
-        if (obj.gameObject.tag == "przeszkoda") Debug.Log("Awaria");
+         void OnCollisionEnter(Collision o)
+    { // https://docs.unity3d.com/ScriptReference/Collider.html
+        if (o.gameObject.tag == "przeszkoda") Debug.Log("Awaria");
 
     }
 
