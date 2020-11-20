@@ -6,26 +6,38 @@ public class InputManager : MonoBehaviour
 {
 
     public float panSpeed;
+    public float rotateSpeed;
+    public float rotateAmount;
+
+    private Quaternion rotation;
 
     private float panDetect = 15.0f;
+    private float minHeight = 10.0f;
+    private float maxHeight = 50.0f;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        rotation = Camera.main.transform.rotation;
     }
 
     // Update is called once per frame
     void Update()
     {
-
         MoveCamera();
+        RotateCamera();
+
+        if(Input.GetKeyDown(KeyCode.Space))
+        {
+            Camera.main.transform.rotation = rotation;
+        }
     }
 
     void MoveCamera()
     {
 
         float moveX = Camera.main.transform.position.x;
+        float moveY = Camera.main.transform.position.y;
         float moveZ = Camera.main.transform.position.z;
 
         float xPos = Input.mousePosition.x;
@@ -50,8 +62,31 @@ public class InputManager : MonoBehaviour
             moveZ -= panSpeed * Time.deltaTime;
         }
 
-        Vector3 newPos = new Vector3(moveX, 0, moveZ);
+        moveY -= Input.GetAxis("Mouse ScrollWheel") * (panSpeed * 3 );
+      
+        moveY = Mathf.Clamp(moveY, minHeight, maxHeight);
+
+
+        Vector3 newPos = new Vector3(moveX, moveY, moveZ);
 
         Camera.main.transform.position = newPos;
+    }
+
+    void RotateCamera()
+    {
+        Vector3 origin = Camera.main.transform.eulerAngles;
+        Vector3 destintion = origin;
+
+        if(Input.GetMouseButton(2))
+        {
+            destintion.x -= Input.GetAxis("Mouse Y") * rotateAmount;
+            destintion.y += Input.GetAxis("Mouse X") * rotateAmount;
+        }
+
+        if(destintion != origin)
+        {
+            Camera.main.transform.eulerAngles = Vector3.MoveTowards(origin, destintion, rotateSpeed * Time.deltaTime);
+        }
+
     }
 }

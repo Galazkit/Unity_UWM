@@ -151,6 +151,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panSpeed: 5
+  rotateSpeed: 150
+  rotateAmount: 50
 --- !u!4 &374633359
 Transform:
   m_ObjectHideFlags: 0
@@ -354,7 +356,7 @@ GameObject:
   - component: {fileID: 1912952140}
   - component: {fileID: 1912952139}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: 'ground '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
