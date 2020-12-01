@@ -4,6 +4,8 @@
 - Camera : move XYZ + rotation + vertical
 - Unit movement (AI - Nav mesh Agent +  Ray )
 - Controllers (nodes, units)
+- Basic harvest mechanics + task list
+
 
 
 ## Główne źródła 

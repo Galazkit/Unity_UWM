@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class ResourceManager : MonoBehaviour
 {
+
+    public float stone;
+    public float maxStone;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -13,6 +17,6 @@ public class ResourceManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 }
