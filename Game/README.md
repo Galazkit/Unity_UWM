@@ -2,7 +2,7 @@
 
 ## Implementacja 
 - Camera : move XYZ + rotation + vertical
-- Unit movement(AI - Nav mesh Agent +  Ray )
+- Unit movement (AI - Nav mesh Agent +  Ray )
 - Controllers (nodes, units)
 
 
