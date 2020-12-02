@@ -5,14 +5,14 @@ using UnityEngine;
 public class NodeManager : MonoBehaviour
 {
 
-    public enum ResourceTypes { Stone};
+    public enum ResourceTypes {Wood, Stone, Iron, Population };
     public ResourceTypes resourceType;
 
     public float harvestTime;
     public float availableResource;
 
     public int gathers;
-    // Start is called before the first frame update
+    // Start is called before the first frame update 
     void Start()
     {
         StartCoroutine(ResourceTick());

@@ -9,6 +9,8 @@ public class ObjectInfo : MonoBehaviour
     public TaskList task;
     public ResourceManager RM;
 
+    private ActionList AL;
+
     GameObject targetNode;
 
     public bool isSelected = false;
@@ -29,6 +31,7 @@ public class ObjectInfo : MonoBehaviour
     {
         StartCoroutine(GatherTick());
         agent = GetComponent<NavMeshAgent>();
+        AL = FindObjectOfType<ActionList>();
 
     }
 
@@ -95,16 +98,12 @@ public class ObjectInfo : MonoBehaviour
         {
             if (hit.collider.tag == "Ground")
             {
-                agent.destination = hit.point;
-                Debug.Log("Lece!");
-
-                task = TaskList.Moving;
+                AL.Move(agent, hit, task);
             }
             else if (hit.collider.tag == "Resource")
             {
                 agent.destination = hit.collider.gameObject.transform.position;
                 Debug.Log("Wydobywam");
-
                 task = TaskList.Gathering;
                 targetNode = hit.collider.gameObject;
             }
