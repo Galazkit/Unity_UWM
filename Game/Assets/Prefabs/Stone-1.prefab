@@ -123,7 +123,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 441737504afe2c14a8f477d439966824, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resourceType: 0
+  resourceType: 1
   harvestTime: 0
   availableResource: 1500
   gathers: 0

@@ -11,7 +11,7 @@ public class InputManager : MonoBehaviour
 
     private Quaternion rotation;
 
-    private float panDetect = 15.0f;
+    private float panDetect = 20.0f;
     private float minHeight = 10.0f;
     private float maxHeight = 50.0f;
 
