@@ -15,8 +15,13 @@ public class InputManager : MonoBehaviour
     private float minHeight = 10.0f;
     private float maxHeight = 50.0f;
 
-    public GameObject selectedObject;
 
+    private Vector2 boxStart;
+    private Vector2 boxEnd;
+    public Texture boxTex;
+
+    public GameObject selectedObject;
+    
     private ObjectInfo selectedInfo;
 
     // Start is called before the first frame update
@@ -34,6 +39,21 @@ public class InputManager : MonoBehaviour
         if(Input.GetMouseButtonDown(0)) //left
         {
             LeftClick();
+        }
+
+        if(Input.GetMouseButton(0) && boxStart == Vector2.zero) //Multiselect box
+        {
+            boxStart = Input.mousePosition;
+        }
+        else if(Input.GetMouseButton(0) && boxStart != Vector2.zero)
+        {
+            boxEnd = Input.mousePosition;
+        }
+
+        if (Input.GetMouseButtonUp(0)) // clear
+        {
+            boxStart = Vector2.zero;
+            boxEnd = Vector2.zero;
         }
 
         if(Input.GetKeyDown(KeyCode.Space))
@@ -119,5 +139,13 @@ public class InputManager : MonoBehaviour
             Camera.main.transform.eulerAngles = Vector3.MoveTowards(origin, destintion, rotateSpeed * Time.deltaTime);
         }
 
+    }
+
+    void OnGUI()
+    {
+        if(boxStart != Vector2.zero && boxEnd != Vector2.zero)
+        {
+            GUI.DrawTexture(new Rect(boxStart.x, Screen.height - boxStart.y, boxEnd.x - boxStart.x, -1 * ((Screen.height- boxStart.y) - (Screen.height - boxEnd.y))),boxTex);
+        }
     }
 }

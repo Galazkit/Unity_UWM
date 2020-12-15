@@ -997,6 +997,7 @@ MonoBehaviour:
   panSpeed: 12
   rotateSpeed: 150
   rotateAmount: 50
+  boxTex: {fileID: 2800000, guid: 0af07477db09e9c489025427a22ce6df, type: 3}
   selectedObject: {fileID: 0}
 --- !u!4 &374633359
 Transform:
