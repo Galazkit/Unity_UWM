@@ -50,6 +50,7 @@ public class InputManager : MonoBehaviour
          {
             if(hit.collider.tag == "Ground")
             {
+                selectedInfo.isSelected = false;
                 selectedObject = null;
                 Debug.Log("Nie wybrano");
             }
