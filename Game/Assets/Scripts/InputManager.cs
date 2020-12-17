@@ -21,8 +21,10 @@ public class InputManager : MonoBehaviour
     public Texture boxTex;
 
     public GameObject selectedObject;
+    private Rect selectBox;
     
     private ObjectInfo selectedInfo;
+    private GameObject[] units;
 
     // Start is called before the first frame update
     void Start()
@@ -41,7 +43,7 @@ public class InputManager : MonoBehaviour
             LeftClick();
         }
 
-        if(Input.GetMouseButton(0) && boxStart == Vector2.zero) //Multiselect box
+        if(Input.GetMouseButton(0) && boxStart == Vector2.zero)
         {
             boxStart = Input.mousePosition;
         }
@@ -50,16 +52,42 @@ public class InputManager : MonoBehaviour
             boxEnd = Input.mousePosition;
         }
 
-        if (Input.GetMouseButtonUp(0)) // clear
+        if (Input.GetMouseButtonUp(0)) 
         {
-            boxStart = Vector2.zero;
+            boxStart = Vector2.zero;//  <- coś tu kaput :O  select box coś świruje
             boxEnd = Vector2.zero;
+
+            units = GameObject.FindGameObjectsWithTag("Selectable");
+            MultiSelect();
+            
+
+            //boxStart = Vector2.zero;
+            //boxEnd = Vector2.zero;
         }
 
         if(Input.GetKeyDown(KeyCode.Space))
         {
             Camera.main.transform.rotation = rotation;
         }
+        selectBox = new Rect(boxStart.x, Screen.height - boxStart.y, boxEnd.x - boxStart.x, -1 * ((Screen.height - boxStart.y) - (Screen.height - boxEnd.y)));
+    }
+    public void MultiSelect()
+    {
+        foreach(GameObject unit in units)
+        {
+            if (unit.GetComponent<ObjectInfo>().isUnit)
+            {
+                Vector2 unitPos = Camera.main.WorldToScreenPoint(unit.transform.position);
+
+                if (selectBox.Contains(unitPos, true))
+                {
+                    unit.GetComponent<ObjectInfo>().isSelected = true;
+                }
+            }
+        }
+        
+        boxStart = Vector2.zero;
+        boxEnd = Vector2.zero;
     }
     public void LeftClick()
     {
@@ -142,10 +170,10 @@ public class InputManager : MonoBehaviour
     }
 
     void OnGUI()
-    {
+    { // 
         if(boxStart != Vector2.zero && boxEnd != Vector2.zero)
         {
-            GUI.DrawTexture(new Rect(boxStart.x, Screen.height - boxStart.y, boxEnd.x - boxStart.x, -1 * ((Screen.height- boxStart.y) - (Screen.height - boxEnd.y))),boxTex);
+            GUI.DrawTexture(selectBox, boxTex);
         }
     }
 }
