@@ -7,9 +7,12 @@ using UnityEngine.UI;
 public class ObjectInfo : MonoBehaviour
 {
     public GameObject iconCam;
+    public GameObject Selected;
+
     public CanvasGroup InfoPanel;
 
     public bool isSelected = false;
+    public bool isUnit; 
 
     public string objectName;
     public Text nameDisp;
@@ -44,6 +47,8 @@ public class ObjectInfo : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        Selected.SetActive(isSelected);
+
         if(health <= 0)
         {
             Destroy(gameObject);
