@@ -9,7 +9,7 @@ public class ActionList : MonoBehaviour
     {
         agent.destination = hit.point;
         Debug.Log("Lece!");
-   //     task = TaskList.Moving;
+   //   task = TaskList.Moving;
     }
 
    // public void Harvest(NavMeshAgent agent, RaycastHit hit, TaskList task, GameObject targetNode)

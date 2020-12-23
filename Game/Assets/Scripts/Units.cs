@@ -24,6 +24,12 @@ public class Units : MonoBehaviour
 
     public GameObject[] drops;
 
+    public float distToTarget;
+
+    public bool isGatherer = false;
+
+    Vector3 offset;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -35,13 +41,48 @@ public class Units : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (task == TaskList.Gathering)
+        {
+            distToTarget = Vector3.Distance(transform.position, targetNode.transform.position);
+            Debug.Log(distToTarget);
+
+            if (distToTarget <= 3.5f)
+            {
+                Gather();
+            }
+        }
+
+        if(task == TaskList.Delivering)
+        {
+            if(distToTarget <= 3.5f)
+            {
+                if (RM.stone >= RM.maxStone)
+                {
+                    task = TaskList.Idle;
+                }
+                else
+                {
+                    RM.stone += heldResource;
+                    heldResource = 0;
+                    task = TaskList.Gathering;
+                    agent.destination = targetNode.transform.position;
+
+                    isGatherer = false;
+                }
+
+            }
+        }
 
         if (targetNode == null)
         {
+
             if (heldResource != 0)
             {
                 drops = GameObject.FindGameObjectsWithTag("Drops");
                 agent.destination = GetClosestDropOff(drops).transform.position;
+                
+                distToTarget = Vector3.Distance(GetClosestDropOff(drops).transform.position, transform.position);
+
                 drops = null;
                 task = TaskList.Delivering;
             }
@@ -52,13 +93,22 @@ public class Units : MonoBehaviour
         }
         if (heldResource >= maxHeldResources)
         {
+
+            targetNode.GetComponent<NodeManager>().gathers--;
+            isGathering = false;
             //Drop off point 
             drops = GameObject.FindGameObjectsWithTag("Drops");
             //finding the closest drop spot
             agent.destination = GetClosestDropOff(drops).transform.position;
+
+            distToTarget = Vector3.Distance(GetClosestDropOff(drops).transform.position, transform.position);
+
             drops = null;
 
             task = TaskList.Delivering;
+
+            //GetComponent<NavMeshObstacle>().enabled = false;
+            //GetComponent<NavMeshAgent>().enabled = true;
         }
 
         if (Input.GetMouseButtonDown(1) && GetComponent<ObjectInfo>().isSelected)
@@ -96,6 +146,9 @@ public class Units : MonoBehaviour
         {
             if (hit.collider.tag == "Ground")
             {
+                targetNode.GetComponent<NodeManager>().gathers--;
+                isGathering = false;
+
                 AL.Move(agent, hit);
                 task = TaskList.Moving;
             }
@@ -110,48 +163,77 @@ public class Units : MonoBehaviour
                 //task = TaskList.Gathering;
                 //targetNode = hit.collider.gameObject;
             }
-        }
-    }
-
-    public void OnTriggerEnter(Collider o)
-    {
-        GameObject hitObject = o.gameObject;
-
-        if (hitObject.tag == "Resource" && task == TaskList.Gathering)
-        {
-            isGathering = true;
-            hitObject.GetComponent<NodeManager>().gathers++;
-            heldResourcesType = hitObject.GetComponent<NodeManager>().resourceType;
-
-            // targetNode = hitObject;
-        }
-        else if (hitObject.tag == "Drops" && task == TaskList.Delivering)
-        {
-            if (RM.stone >= RM.maxStone)
+            else if(hit.collider.tag == "Drops")
             {
-                task = TaskList.Idle;
-            }
-            else
-            {
-                RM.stone += heldResource;
-                heldResource = 0;
-                task = TaskList.Gathering;
+                targetNode.GetComponent<NodeManager>().gathers--;
+                isGathering = false;
+                drops = GameObject.FindGameObjectsWithTag("Drops");
+                agent.destination = GetClosestDropOff(drops).transform.position;
 
-                agent.destination = targetNode.transform.position;
+                distToTarget = Vector3.Distance(GetClosestDropOff(drops).transform.position, transform.position);
+
+                drops = null;
+                task = TaskList.Delivering;
             }
         }
     }
-
-    public void OnTriggerExit(Collider o)
+    public void Gather()
     {
-        GameObject hitObject = o.gameObject;
-
-        if (hitObject.tag == "Resource")
+        isGathering = true;
+        if (!isGatherer)
         {
-            hitObject.GetComponent<NodeManager>().gathers--;
-            isGathering = false;
+            targetNode.GetComponent<NodeManager>().gathers++;
+            isGatherer = true;
         }
+
+        heldResourcesType = targetNode.GetComponent<NodeManager>().resourceType;
+
+        //GetComponent<NavMeshObstacle>().enabled = true;
+        //GetComponent<NavMeshAgent>().enabled = false;
     }
+    //public void OnTriggerEnter(Collider o)
+    //{
+    //    GameObject hitObject = o.gameObject;
+
+    //    if (hitObject.tag == "Resource" && task == TaskList.Gathering)
+    //    {
+    //        isGathering = true;
+    //        hitObject.GetComponent<NodeManager>().gathers++;
+    //        heldResourcesType = hitObject.GetComponent<NodeManager>().resourceType;
+
+    //       // GetComponent<NavMeshObstacle>().enabled = true;
+    //       // GetComponent<NavMeshAgent>().enabled = false;
+
+    //        // targetNode = hitObject;
+    //    }
+    //    else if (hitObject.tag == "Drops" && task == TaskList.Delivering)
+    //    {
+    //        if (RM.stone >= RM.maxStone)
+    //        {
+    //            task = TaskList.Idle;
+    //        }
+    //        else
+    //        {
+    //            RM.stone += heldResource;
+    //            heldResource = 0;
+    //            task = TaskList.Gathering;
+
+    //            agent.destination = targetNode.transform.position;
+    //        }
+    //    }
+    //}
+
+    //public void OnTriggerExit(Collider o)
+    //{
+    //    GameObject hitObject = o.gameObject;
+
+    //    if (hitObject.tag == "Resource")
+    //    {
+    //        hitObject.GetComponent<NodeManager>().gathers--;
+    //        isGathering = false;
+            
+    //    }
+    //}
 
     IEnumerator GatherTick()
     {

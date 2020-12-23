@@ -12,6 +12,7 @@ public class ObjectInfo : MonoBehaviour
     public CanvasGroup InfoPanel;
 
     public bool isSelected = false;
+    public bool isPrimary = false;
     public bool isUnit; 
 
     public string objectName;
@@ -49,7 +50,7 @@ public class ObjectInfo : MonoBehaviour
     {
         Selected.SetActive(isSelected);
 
-        if(health <= 0)
+        if (health <= 0)
         {
             Destroy(gameObject);
         }
@@ -71,12 +72,12 @@ public class ObjectInfo : MonoBehaviour
             InfoPanel.blocksRaycasts = true;
             InfoPanel.interactable = true;
             
-        }
-        else
-        {
+       }
+       else
+       {
             InfoPanel.alpha = 0;
             InfoPanel.blocksRaycasts = false;
             InfoPanel.interactable = false;
-        }
+       }
     }
 }

@@ -1,42 +1,47 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InputManager : MonoBehaviour
 {
+    float panSpeed = 5;
+    float panDetect = 30;
 
-    public float panSpeed;
-    public float rotateSpeed;
-    public float rotateAmount;
+    float panBorderSpeed = 0.1f;
+    float scrollSpeed = 1f;
 
+    public static List<ObjectInfo> selectedObjects = new List<ObjectInfo>();
+
+    public CanvasGroup UnitPanel;
     private Quaternion rotation;
-
-    private float panDetect = 20.0f;
-    private float minHeight = 10.0f;
-    private float maxHeight = 50.0f;
-
 
     private Vector2 boxStart;
     private Vector2 boxEnd;
     public Texture boxTex;
 
+    public bool hasPrimary;
+    public GameObject primaryObject;
+
     public GameObject selectedObject;
     private Rect selectBox;
     
-    private ObjectInfo selectedInfo;
+    public ObjectInfo selectedInfo;
     private GameObject[] units;
 
     // Start is called before the first frame update
     void Start()
     {
-        rotation = Camera.main.transform.rotation;
+        //rotation = Camera.main.transform.rotation;
     }
 
     // Update is called once per frame
     void Update()
     {
+        hasPrimary = primaryObject;
+
+        //UnitPanel = GameObject.Find("UnitPanel").GetComponent<CanvasGroup>();
         MoveCamera();
-        RotateCamera();
 
         if(Input.GetMouseButtonDown(0)) //left
         {
@@ -58,6 +63,8 @@ public class InputManager : MonoBehaviour
             boxEnd = Vector2.zero;
 
             units = GameObject.FindGameObjectsWithTag("Selectable");
+            //multicelect działa wybieranie pojedyńczej, left click przestał działąć.. :O
+
             MultiSelect();
             
 
@@ -70,6 +77,19 @@ public class InputManager : MonoBehaviour
             Camera.main.transform.rotation = rotation;
         }
         selectBox = new Rect(boxStart.x, Screen.height - boxStart.y, boxEnd.x - boxStart.x, -1 * ((Screen.height - boxStart.y) - (Screen.height - boxEnd.y)));
+
+        if (primaryObject != null)
+        {
+            UnitPanel.alpha = 1;
+            UnitPanel.blocksRaycasts = true;
+            UnitPanel.interactable = true;
+        }
+        else
+        {
+            UnitPanel.alpha = 0;
+            UnitPanel.blocksRaycasts = false;
+            UnitPanel.interactable = false;
+        }
     }
     public void MultiSelect()
     {
@@ -81,11 +101,15 @@ public class InputManager : MonoBehaviour
 
                 if (selectBox.Contains(unitPos, true))
                 {
+                    if (!hasPrimary)
+                    {
+                        primaryObject = unit;
+                        unit.GetComponent<ObjectInfo>().isPrimary = true;
+                    }
                     unit.GetComponent<ObjectInfo>().isSelected = true;
                 }
             }
         }
-        
         boxStart = Vector2.zero;
         boxEnd = Vector2.zero;
     }
@@ -94,83 +118,122 @@ public class InputManager : MonoBehaviour
          Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
          RaycastHit hit;
 
+         // Działa pojedyńczy select, ale coś z UI...
          if(Physics.Raycast(ray, out hit, 100))
          {
-            if(hit.collider.tag == "Ground")
+            //if (hit.collider.tag == "Ground")
+            //{
+            //    selectedInfo.isSelected = false;
+            //    selectedObject = null;
+            //    Debug.Log("Nie wybrano");
+            //}
+            if (hit.collider.tag == "Ground")
             {
                 selectedInfo.isSelected = false;
-                selectedObject = null;
+                selectedInfo.isPrimary = false;
+                primaryObject = null;
+
+                units = GameObject.FindGameObjectsWithTag("Selectable");
+                foreach (GameObject unit in units)
+                {
+                    unit.GetComponent<ObjectInfo>().isSelected = false;
+                }
+                selectedInfo = null;
+
                 Debug.Log("Nie wybrano");
             }
+
+            //else if (hit.collider.tag == "Selectable")
+            //{
+            //    selectedObject = hit.collider.gameObject;
+            //    selectedInfo = selectedObject.GetComponent<ObjectInfo>();
+
+            //    selectedInfo.isSelected = true;
+            //    Debug.Log("wybrano" + selectedInfo.objectName);
+            //}
             else if(hit.collider.tag == "Selectable")
             {
-                selectedObject = hit.collider.gameObject;
+                foreach (GameObject unit in units)
+                {
+                    unit.GetComponent<ObjectInfo>().isSelected = true; //true left click działą
+                }
+                if (hasPrimary)
+                {
+                    selectedInfo.isSelected = false;
+                    selectedInfo.isPrimary = false;
+                    primaryObject = null;
+                }
+                primaryObject = hit.collider.gameObject;
                 selectedInfo = selectedObject.GetComponent<ObjectInfo>();
 
                 selectedInfo.isSelected = true;
+                selectedInfo.isPrimary = true;
+
                 Debug.Log("wybrano" + selectedInfo.objectName);
             }
-         }
+        }
     }
     void MoveCamera()
     {
-
-        float moveX = Camera.main.transform.position.x;
-        float moveY = Camera.main.transform.position.y;
-        float moveZ = Camera.main.transform.position.z;
+        float CamPosX = Camera.main.transform.position.x;
+        float CamPosY = Camera.main.transform.position.y;//the lower the camera is, the slower the WASD will move the camera 
+        float CamPosZ = Camera.main.transform.position.z;
 
         float xPos = Input.mousePosition.x;
         float yPos = Input.mousePosition.y;
 
-        if(Input.GetKey(KeyCode.A)  || xPos > 0 && xPos < panDetect)
+        Vector3 forwardMove = new Vector3(0, 0, 0);
+        Vector3 lateralMove = new Vector3(0, 0, 0);
+
+        if (Input.GetKey(KeyCode.W)) //W
         {
-            moveX -= panSpeed * Time.deltaTime;
+            forwardMove = Camera.main.transform.forward * panSpeed * CamPosY * Time.deltaTime;
+
+            //moveZ += panSpeed * moveY  * Time.deltaTime;
+        }
+        else if (Input.GetKey(KeyCode.S))  //S
+        {
+            forwardMove = -Camera.main.transform.forward * panSpeed * CamPosY * Time.deltaTime;
+        }
+        else if (yPos < Screen.height && yPos > Screen.height - panDetect) //W
+        {
+            forwardMove = Camera.main.transform.forward * panBorderSpeed * CamPosY * Time.deltaTime;
+        }
+        else if (yPos > 0 && yPos < panDetect)  //S
+        {
+            forwardMove = -Camera.main.transform.forward * panBorderSpeed * CamPosY * Time.deltaTime;
         }
 
-        if(Input.GetKey(KeyCode.D)  || xPos < Screen.width && xPos > Screen.width - panDetect)
+        if (Input.GetKey(KeyCode.A))  //A
+        { lateralMove = -Camera.main.transform.right * panSpeed * CamPosY * Time.deltaTime; }
+        else if (Input.GetKey(KeyCode.D)) //D
         {
-            moveX += panSpeed * Time.deltaTime;
+            lateralMove = Camera.main.transform.right * panSpeed * CamPosY * Time.deltaTime;
+        }
+        else if (xPos > 0 && xPos < panDetect)   //A
+        {
+            lateralMove = -Camera.main.transform.right * panBorderSpeed * CamPosY * Time.deltaTime;
+        }
+        else if (xPos < Screen.width && xPos > Screen.width - panDetect) //D
+        {
+            lateralMove = Camera.main.transform.right * panBorderSpeed * CamPosY * Time.deltaTime;
         }
 
-        if(Input.GetKey(KeyCode.W)  || yPos < Screen.height && yPos > Screen.height - panDetect)
-        {
-            moveZ += panSpeed * Time.deltaTime;
-        }
-        else if(Input.GetKey(KeyCode.S)  || yPos > 0 && yPos < panDetect)
-        {
-            moveZ -= panSpeed * Time.deltaTime;
-        }
+        CamPosY -= Input.GetAxis("Mouse ScrollWheel") * (scrollSpeed * 100) * (CamPosY / 40); // 100 because without it the zoom was slow
+        forwardMove.y = 0;
+        Vector3 move = lateralMove + forwardMove;
 
-        moveY -= Input.GetAxis("Mouse ScrollWheel") * (panSpeed * 3 );
-      
-        moveY = Mathf.Clamp(moveY, minHeight, maxHeight);
+        CamPosY = Mathf.Clamp(CamPosY + move.y, 10, 40);
+        CamPosX = Mathf.Clamp(CamPosX + move.x, -100, 100);
+        CamPosZ = Mathf.Clamp(CamPosZ + move.z, -100, 100);//in this case y maps to the z (jest dobrze)
 
 
-        Vector3 newPos = new Vector3(moveX, moveY, moveZ);
-
+        Vector3 newPos = new Vector3(CamPosX, CamPosY, CamPosZ);
         Camera.main.transform.position = newPos;
     }
 
-    void RotateCamera()
-    {
-        Vector3 origin = Camera.main.transform.eulerAngles;
-        Vector3 destintion = origin;
-
-        if(Input.GetMouseButton(2))
-        {
-            destintion.x -= Input.GetAxis("Mouse Y") * rotateAmount;
-            destintion.y += Input.GetAxis("Mouse X") * rotateAmount;
-        }
-
-        if(destintion != origin)
-        {
-            Camera.main.transform.eulerAngles = Vector3.MoveTowards(origin, destintion, rotateSpeed * Time.deltaTime);
-        }
-
-    }
-
     void OnGUI()
-    { // 
+    { 
         if(boxStart != Vector2.zero && boxEnd != Vector2.zero)
         {
             GUI.DrawTexture(selectBox, boxTex);

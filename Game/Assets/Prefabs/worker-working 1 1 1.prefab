@@ -208,6 +208,7 @@ MonoBehaviour:
   InfoPanel: {fileID: 2217130579132235746, guid: 38f30523c4a8f2941947f5ea6a64e6d6,
     type: 3}
   isSelected: 0
+  isPrimary: 0
   isUnit: 1
   objectName: Worker
   nameDisp: {fileID: 0}
@@ -287,13 +288,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdbe3b2dbcdff294fa4822b9fbe399c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  task: 0
-  RM: {fileID: 0}
+  task: 2
+  RM: {fileID: 3177962311381294366, guid: 6546cd5265df15b469206a04b688e1eb, type: 3}
   heldResourcesType: 0
   isGathering: 0
   heldResource: 0
   maxHeldResources: 5
   drops: []
+  distToTarget: 0
+  isGatherer: 0
 --- !u!1 &5595928736170366757
 GameObject:
   m_ObjectHideFlags: 0
