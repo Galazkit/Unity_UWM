@@ -7,15 +7,17 @@ public class Units : MonoBehaviour
 {
 
     public TaskList task;
+
     public ResourceManager RM;
 
     private ActionList AL;
 
-    GameObject targetNode;
+    public GameObject targetNode;
 
-    public NodeManager.ResourceTypes heldResourcesType;
+    public NodeManager.ResourceTypes heldResourceType;
 
-    public bool isGathering = false;
+    public bool isGathering = false; // czy obecnie coś wydobywa
+    public bool isGatherer = false; // czy jest liczony jako zbieracz
 
     private NavMeshAgent agent;
 
@@ -25,10 +27,6 @@ public class Units : MonoBehaviour
     public GameObject[] drops;
 
     public float distToTarget;
-
-    public bool isGatherer = false;
-
-    Vector3 offset;
 
     // Start is called before the first frame update
     void Start()
@@ -41,11 +39,15 @@ public class Units : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(transform.position == agent.destination && task == TaskList.Moving)
+        {
+            task = TaskList.Idle;
+        }
+
         if (task == TaskList.Gathering)
         {
             distToTarget = Vector3.Distance(transform.position, targetNode.transform.position);
-            Debug.Log(distToTarget);
-
+            //Debug.Log(distToTarget);
             if (distToTarget <= 3.5f)
             {
                 Gather();
@@ -56,23 +58,116 @@ public class Units : MonoBehaviour
         {
             if(distToTarget <= 3.5f)
             {
-                if (RM.stone >= RM.maxStone)
+                if (heldResourceType == NodeManager.ResourceTypes.Wood)
                 {
-                    task = TaskList.Idle;
+                    if (RM.wood >= RM.maxWood)
+                    {
+                        task = TaskList.Idle;
+                        isGatherer = false;
+                    }
+                    else if (RM.wood + heldResource >= RM.maxWood)
+                    {
+                        int resourceOverflow = (int)RM.maxWood - (int)RM.wood;
+
+                        heldResource -= resourceOverflow;
+                        RM.wood = RM.maxWood;
+                        task = TaskList.Gathering;
+                        agent.destination = targetNode.transform.position;
+                        isGatherer = false;
+                    }
+                    else
+                    {
+                        RM.wood += heldResource;
+                        heldResource = 0;
+                        task = TaskList.Gathering;
+                        agent.destination = targetNode.transform.position;
+
+                        isGatherer = false;
+                    }
                 }
-                else
+                if (heldResourceType == NodeManager.ResourceTypes.Stone)
                 {
-                    RM.stone += heldResource;
-                    heldResource = 0;
-                    task = TaskList.Gathering;
-                    agent.destination = targetNode.transform.position;
+                    if (RM.stone >= RM.maxStone)
+                    {
+                        task = TaskList.Idle;
+                        isGatherer = false;
+                    }
+                    else if (RM.stone + heldResource >= RM.maxStone)
+                    {
+                        int resourceOverflow = (int)RM.maxStone - (int)RM.stone;
 
-                    isGatherer = false;
+                        heldResource -= resourceOverflow;
+                        RM.stone = RM.maxStone;
+                        task = TaskList.Gathering;
+                        agent.destination = targetNode.transform.position;
+                        isGatherer = false;
+                    }
+                    else
+                    {
+                        RM.stone += heldResource;
+                        heldResource = 0;
+                        task = TaskList.Gathering;
+                        agent.destination = targetNode.transform.position;
+
+                        isGatherer = false;
+                    }
                 }
+                if (heldResourceType == NodeManager.ResourceTypes.Iron)
+                {
+                    if (RM.iron >= RM.maxIron)
+                    {
+                        task = TaskList.Idle;
+                        isGatherer = false;
+                    }
+                    else if (RM.iron + heldResource >= RM.maxIron)
+                    {
+                        int resourceOverflow = (int)RM.maxIron - (int)RM.iron;
 
+                        heldResource -= resourceOverflow;
+                        RM.iron = RM.maxIron;
+                        task = TaskList.Gathering;
+                        agent.destination = targetNode.transform.position;
+                        isGatherer = false;
+                    }
+                    else
+                    {
+                        RM.iron += heldResource;
+                        heldResource = 0;
+                        task = TaskList.Gathering;
+                        agent.destination = targetNode.transform.position;
+
+                        isGatherer = false;
+                    }
+                }
+                if (heldResourceType == NodeManager.ResourceTypes.Population)
+                {
+                    if (RM.population >= RM.maxPopulation)
+                    {
+                        task = TaskList.Idle;
+                        isGatherer = false;
+                    }
+                    else if (RM.population + heldResource >= RM.maxPopulation)
+                    {
+                        int resourceOverflow = (int)RM.maxPopulation - (int)RM.population;
+
+                        heldResource -= resourceOverflow;
+                        RM.population = RM.maxPopulation;
+                        task = TaskList.Gathering;
+                        agent.destination = targetNode.transform.position;
+                        isGatherer = false;
+                    }
+                    else
+                    {
+                        RM.population += heldResource;
+                        heldResource = 0;
+                        task = TaskList.Gathering;
+                        agent.destination = targetNode.transform.position;
+
+                        isGatherer = false;
+                    }
+                }
             }
         }
-
         if (targetNode == null)
         {
 
@@ -80,7 +175,7 @@ public class Units : MonoBehaviour
             {
                 drops = GameObject.FindGameObjectsWithTag("Drops");
                 agent.destination = GetClosestDropOff(drops).transform.position;
-                
+
                 distToTarget = Vector3.Distance(GetClosestDropOff(drops).transform.position, transform.position);
 
                 drops = null;
@@ -100,17 +195,13 @@ public class Units : MonoBehaviour
             drops = GameObject.FindGameObjectsWithTag("Drops");
             //finding the closest drop spot
             agent.destination = GetClosestDropOff(drops).transform.position;
-
             distToTarget = Vector3.Distance(GetClosestDropOff(drops).transform.position, transform.position);
-
             drops = null;
-
             task = TaskList.Delivering;
 
             //GetComponent<NavMeshObstacle>().enabled = false;
             //GetComponent<NavMeshAgent>().enabled = true;
         }
-
         if (Input.GetMouseButtonDown(1) && GetComponent<ObjectInfo>().isSelected)
         {
             RightClick();
@@ -146,9 +237,12 @@ public class Units : MonoBehaviour
         {
             if (hit.collider.tag == "Ground")
             {
-                targetNode.GetComponent<NodeManager>().gathers--;
-                isGathering = false;
-
+                if (isGathering)
+                {
+                    targetNode.GetComponent<NodeManager>().gathers--;
+                    isGathering = false;
+                    isGatherer = false;
+                }
                 AL.Move(agent, hit);
                 task = TaskList.Moving;
             }
@@ -157,11 +251,6 @@ public class Units : MonoBehaviour
                 AL.Move(agent, hit);
                 targetNode = hit.collider.gameObject;
                 task = TaskList.Gathering;
-
-                //agent.destination = hit.collider.gameObject.transform.position;
-                //Debug.Log("Wydobywam");
-                //task = TaskList.Gathering;
-                //targetNode = hit.collider.gameObject;
             }
             else if(hit.collider.tag == "Drops")
             {
@@ -169,9 +258,7 @@ public class Units : MonoBehaviour
                 isGathering = false;
                 drops = GameObject.FindGameObjectsWithTag("Drops");
                 agent.destination = GetClosestDropOff(drops).transform.position;
-
                 distToTarget = Vector3.Distance(GetClosestDropOff(drops).transform.position, transform.position);
-
                 drops = null;
                 task = TaskList.Delivering;
             }
@@ -185,56 +272,11 @@ public class Units : MonoBehaviour
             targetNode.GetComponent<NodeManager>().gathers++;
             isGatherer = true;
         }
-
-        heldResourcesType = targetNode.GetComponent<NodeManager>().resourceType;
+        heldResourceType = targetNode.GetComponent<NodeManager>().resourceType;
 
         //GetComponent<NavMeshObstacle>().enabled = true;
         //GetComponent<NavMeshAgent>().enabled = false;
     }
-    //public void OnTriggerEnter(Collider o)
-    //{
-    //    GameObject hitObject = o.gameObject;
-
-    //    if (hitObject.tag == "Resource" && task == TaskList.Gathering)
-    //    {
-    //        isGathering = true;
-    //        hitObject.GetComponent<NodeManager>().gathers++;
-    //        heldResourcesType = hitObject.GetComponent<NodeManager>().resourceType;
-
-    //       // GetComponent<NavMeshObstacle>().enabled = true;
-    //       // GetComponent<NavMeshAgent>().enabled = false;
-
-    //        // targetNode = hitObject;
-    //    }
-    //    else if (hitObject.tag == "Drops" && task == TaskList.Delivering)
-    //    {
-    //        if (RM.stone >= RM.maxStone)
-    //        {
-    //            task = TaskList.Idle;
-    //        }
-    //        else
-    //        {
-    //            RM.stone += heldResource;
-    //            heldResource = 0;
-    //            task = TaskList.Gathering;
-
-    //            agent.destination = targetNode.transform.position;
-    //        }
-    //    }
-    //}
-
-    //public void OnTriggerExit(Collider o)
-    //{
-    //    GameObject hitObject = o.gameObject;
-
-    //    if (hitObject.tag == "Resource")
-    //    {
-    //        hitObject.GetComponent<NodeManager>().gathers--;
-    //        isGathering = false;
-            
-    //    }
-    //}
-
     IEnumerator GatherTick()
     {
         while (true)
