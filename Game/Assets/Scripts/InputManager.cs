@@ -11,8 +11,10 @@ public class InputManager : MonoBehaviour
     float panBorderSpeed = 0.1f;
     float scrollSpeed = 1f;
     //--------------------------------------
+    [SerializeField] LayerMask mask;
 
     public bool hasPrimary;
+    public bool circlePlaced = false;
 
     public CanvasGroup ObjectPanel;
 
@@ -20,6 +22,8 @@ public class InputManager : MonoBehaviour
     private Vector2 boxEnd;
 
     public GameObject primaryObject;
+    public GameObject selectionCircle;
+    public GameObject selectionCirclePrefab;
 
     private Rect selectBox;
     public Texture boxTex;

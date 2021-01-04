@@ -64,15 +64,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\ActionList.cs" />
-    <Compile Include="Assets\Scripts\Controller.cs" />
     <Compile Include="Assets\Scripts\GUIManager.cs" />
     <Compile Include="Assets\Scripts\InputManager.cs" />
-    <Compile Include="Assets\Scripts\NodeManager.cs" />
     <Compile Include="Assets\Scripts\ObjectInfo.cs" />
     <Compile Include="Assets\Scripts\ResourceManager.cs" />
-    <Compile Include="Assets\Scripts\TaskList.cs" />
-    <Compile Include="Assets\Scripts\Units.cs" />
     <Compile Include="Assets\Scripts\mouseCam.cs" />
     <Reference Include="UnityEngine">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2019.4.11f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
