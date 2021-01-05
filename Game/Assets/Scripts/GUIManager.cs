@@ -24,10 +24,10 @@ public class GUIManager : MonoBehaviour
      // Update is called once per frame
      void Update()
      {
-        if (primary != null)
-        {
-            primary = GameObject.FindGameObjectWithTag("Player").GetComponent<InputManager>().selectedInfo;
+        primary = GameObject.FindGameObjectWithTag("Player").GetComponent<InputManager>().selectedInfo;
 
+        if (primary)
+        {
             HB.maxValue = primary.maxHealth;
             HB.value = primary.health;
 

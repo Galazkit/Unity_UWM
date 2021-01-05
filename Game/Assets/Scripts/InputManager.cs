@@ -2,34 +2,48 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 
 public class InputManager : MonoBehaviour
 {
     float panSpeed = 5;
     float panDetect = 30;
 
-    float panBorderSpeed = 0.1f;
+    float panBorderSpeed = 0.5f;
     float scrollSpeed = 1f;
     //--------------------------------------
+
+    public static List<ObjectInfo> selectedObjects = new List<ObjectInfo>();
+
+    public Canvas canvas;
+
+    public Image selectionBox;
+
     [SerializeField] LayerMask mask;
 
     public bool hasPrimary;
-    public bool circlePlaced = false;
+    public bool hasTolTip;
 
     public CanvasGroup ObjectPanel;
 
-    private Vector2 boxStart;
-    private Vector2 boxEnd;
+     private Vector2 boxStart;
+     private Vector2 boxEnd;
 
     public GameObject primaryObject;
-    public GameObject selectionCircle;
-    public GameObject selectionCirclePrefab;
+    public GameObject tolTip;
 
     private Rect selectBox;
     public Texture boxTex;
 
     public ObjectInfo selectedInfo;
     private GameObject[] units;
+
+
+    private Vector3 startPos;
+    private BoxCollider worldCollider;
+    private RectTransform RT;
+    private bool isSelecting;
+
     //------------------------------
 
     // public static List<ObjectInfo> selectedObjects = new List<ObjectInfo>();
@@ -42,37 +56,52 @@ public class InputManager : MonoBehaviour
         rotation = Camera.main.transform.rotation;
     }
 
+    private void Awake()
+    {
+        if (canvas == null)
+        {
+            canvas = FindObjectOfType<Canvas>();
+        }
+
+        if (selectionBox != null)
+        {
+            RT = selectionBox.GetComponent<RectTransform>();
+            RT.pivot = Vector2.one * 0.5f;
+            RT.anchorMin = Vector2.one * 0.5f;
+            RT.anchorMax = Vector2.one * 0.5f;
+            selectionBox.gameObject.SetActive(false);
+        }
+    }
     // Update is called once per frame
     void Update()
     {
-        hasPrimary = primaryObject;
-       // ObjectPanel = GameObject.Find("UnitPanel").GetComponent<CanvasGroup>();
         MoveCamera();
+        hasPrimary = primaryObject;
+        hasTolTip = tolTip;
 
-        if(Input.GetMouseButtonDown(0))
-        {
-            LeftClick();
-        }
-
-        if(Input.GetMouseButton(0) && boxStart == Vector2.zero)
+        #region boxselect old
+        if (Input.GetMouseButton(0) && boxStart == Vector2.zero)
         {
             boxStart = Input.mousePosition;
         }
-        else if(Input.GetMouseButton(0) && boxStart != Vector2.zero)
+        else if (Input.GetMouseButton(0) && boxStart != Vector2.zero)
         {
             boxEnd = Input.mousePosition;
         }
 
-        if (Input.GetMouseButtonUp(0)) 
+        if (Input.GetMouseButtonUp(0))
         {
             boxStart = Vector2.zero;
             boxEnd = Vector2.zero;
 
             units = GameObject.FindGameObjectsWithTag("Selectable");
             MultiSelect();
-            
+
         }
         selectBox = new Rect(boxStart.x, Screen.height - boxStart.y, boxEnd.x - boxStart.x, -1 * ((Screen.height - boxStart.y) - (Screen.height - boxEnd.y)));
+        #endregion
+
+
 
         if (primaryObject != null)
         {
@@ -86,14 +115,92 @@ public class InputManager : MonoBehaviour
             ObjectPanel.blocksRaycasts = false;
             ObjectPanel.interactable = false;
         }
-        if (Input.GetKeyDown(KeyCode.Space))
+
+        if (Input.GetKeyDown(KeyCode.Space)) // resetowanie kamery
         {
             Camera.main.transform.rotation = rotation;
         }
     }
+    //    // obsługa myszy
+
+    //    if (Input.GetMouseButtonDown(0))
+    //    {
+    //        LeftClick();
+    //    }
+
+    //    if (Input.GetMouseButtonUp(0))
+    //    {
+    //        isSelecting = false;
+    //    }
+
+    //    selectionBox.gameObject.SetActive(isSelecting);
+
+    //    if (isSelecting)
+    //    {
+    //        Bounds bounds = new Bounds();
+    //        bounds.center = Vector3.Lerp(startPos, Input.mousePosition, 0.5f);
+    //        bounds.size = new Vector3(
+    //            Mathf.Abs(startPos.x - Input.mousePosition.x),
+    //            Mathf.Abs(startPos.y - Input.mousePosition.y),
+    //            0
+    //            );
+    //        RT.position = bounds.center;
+    //        RT.sizeDelta = canvas.transform.InverseTransformVector(bounds.size);
+
+    //        foreach (ObjectInfo selectable in selectedObjects)
+    //        {
+    //            if (selectable.isUnit && selectable.isPlayerObject)
+    //            {
+    //                Vector3 screenPos = Camera.main.WorldToScreenPoint(selectable.transform.position);
+    //                screenPos.z = 0;
+    //                UpdateSelection(selectable, bounds.Contains(screenPos));
+    //            }
+    //        }
+    //    }
+    //}
+    //public void UpdateSelection(ObjectInfo selectedObject, bool value)
+    //{
+    //    if (selectedObject.isSelected != value)
+    //    {
+    //        if (value == false)
+    //        {
+    //            if (hasPrimary)
+    //            {
+    //                selectedObject.isPrimary = value;
+    //                primaryObject = null;
+    //                hasPrimary = value;
+    //            }
+    //            else
+    //            {
+    //                if (!hasPrimary)
+    //                {
+    //                    selectedObject.isPrimary = value;
+    //                    primaryObject = selectedObject.gameObject;
+    //                    hasPrimary = value;
+    //                    selectedInfo = primaryObject.GetComponent<ObjectInfo>();
+    //                }
+    //            }
+
+    //            selectedObject.isSelected = value;
+    //        }
+    //    }
+    //}
+
+    //List<ObjectInfo> GetSelected()
+    //{
+    //    return new List<ObjectInfo>(selectedObjects.Where(x => x.isSelected));
+    //}
+
+    //public void ClearSelection()
+    //{
+    //    selectedObjects.ForEach(x => x.isSelected = false);
+    //    selectedObjects.ForEach(x => x.isPrimary = false);
+    //}
+
+    #region multisel old
     public void MultiSelect()
     {
-        foreach(GameObject unit in units)
+        foreach (GameObject unit in units)
         {
             if (unit.GetComponent<ObjectInfo>().isUnit)
             {
@@ -110,16 +217,19 @@ public class InputManager : MonoBehaviour
                 }
             }
         }
-        boxStart = Vector2.zero;
-        boxEnd = Vector2.zero;
+        //boxStart = Vector2.zero;
+        //boxEnd = Vector2.zero;
     }
+    #endregion
+
+    #region old Left click
     public void LeftClick()
     {
-         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-         RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
 
-         if(Physics.Raycast(ray, out hit, 100))
-         {
+        if (Physics.Raycast(ray, out hit))
+        {
             //if (hit.collider.tag == "Ground")
             //{
             //    selectedInfo.isSelected = false;
@@ -139,7 +249,6 @@ public class InputManager : MonoBehaviour
                     unit.GetComponent<ObjectInfo>().isSelected = false;
                 }
                 selectedInfo = null;
-                //Debug.Log("Nie wybrano");
             }
 
             //else if (hit.collider.tag == "Selectable")
@@ -150,7 +259,7 @@ public class InputManager : MonoBehaviour
             //    selectedInfo.isSelected = true;
             //    Debug.Log("wybrano" + selectedInfo.objectName);
             //}
-            else if(hit.collider.tag == "Selectable")
+            else if (hit.collider.tag == "Selectable")
             {
                 units = GameObject.FindGameObjectsWithTag("Selectable");
 
@@ -172,10 +281,37 @@ public class InputManager : MonoBehaviour
                 selectedInfo.isSelected = true;
                 selectedInfo.isPrimary = true;
 
-               // Debug.Log("wybrano" + selectedInfo.objectName);
+                // Debug.Log("wybrano" + selectedInfo.objectName);
             }
         }
     }
+    #endregion
+    //public void LeftClick()
+    //{
+    //     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+    //     RaycastHit hit;
+
+    //    if(Physics.Raycast(ray, out hit))
+    //    {
+    //        ObjectInfo OI = hit.collider.GetComponent<ObjectInfo>();
+
+    //        if(OI != null)
+    //        {
+    //            if (Input.GetKey(KeyCode.LeftShift))
+    //            {
+    //                UpdateSelection(OI, !OI.isSelected);
+    //            }
+    //            else
+    //            {
+    //                ClearSelection();
+    //                UpdateSelection(OI, true);
+    //            }
+    //        }
+    //    }
+    //    startPos = Input.mousePosition;
+    //    isSelecting = true;
+    //}
+
     void MoveCamera()
     {
         float CamPosX = Camera.main.transform.position.x;
@@ -237,8 +373,8 @@ public class InputManager : MonoBehaviour
     }
 
     void OnGUI()
-    { 
-        if(boxStart != Vector2.zero && boxEnd != Vector2.zero)
+    {
+        if (boxStart != Vector2.zero && boxEnd != Vector2.zero)
         {
             GUI.DrawTexture(selectBox, boxTex);
         }

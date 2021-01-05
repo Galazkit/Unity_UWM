@@ -21,12 +21,12 @@ public class ObjectInfo : MonoBehaviour
 
     public bool isGathering = false; // czy obecnie coś wydobywa
     public bool isGatherer = false; // czy jest liczony jako zbieracz
-    public bool canAttack;
 
     public int heldResource;
     public int maxHeldResources;
 
     public GameObject[] drops;
+    public GameObject targetNode;
     #endregion
 
     public enum ObjectTypes { Node, Building, Unit};
@@ -48,6 +48,7 @@ public class ObjectInfo : MonoBehaviour
     public bool isUnit;
     public bool isPlayerObject;
     public bool isAllyObject;
+    public bool canAttack;
 
     public string objectName;
 
@@ -58,17 +59,25 @@ public class ObjectInfo : MonoBehaviour
     public float kills;
     public float distToTarget;
 
+    public float attackSpeed;
+    public float range;
+
     private NavMeshAgent agent;
+
+    //internal bool isSelected { get; set; }
 
     void Start()
     {
+        health = maxHealth;
+
+        StartCoroutine(AttackTick());
+
         if (objectType == ObjectTypes.Node || isWorker)
         {
             StartCoroutine(OneTick());
         }
 
         agent = GetComponent<NavMeshAgent>();
-
         iconCam = GetComponentInChildren<Camera>().gameObject;
     }
 
@@ -207,24 +216,24 @@ public class ObjectInfo : MonoBehaviour
                     }
                 }
             }
-            if (target == null)
-            {
-
-                if (heldResource != 0)
+            if (target == null && task == TaskList.Gathering) {
                 {
-                    drops = GameObject.FindGameObjectsWithTag("Drops");
-                    agent.destination = GetClosestDropOff(drops).transform.position;
+                    if (heldResource != 0)
+                    {
+                        drops = GameObject.FindGameObjectsWithTag("Drops");
+                        agent.destination = GetClosestDropOff(drops).transform.position;
 
-                    distToTarget = Vector3.Distance(GetClosestDropOff(drops).transform.position, transform.position);
+                        distToTarget = Vector3.Distance(GetClosestDropOff(drops).transform.position, transform.position);
 
-                    drops = null;
-                    task = TaskList.Delivering;
-                    target = null;
-                }
-                else
-                {
-                    task = TaskList.Idle;
-                    target = null;
+                        drops = null;
+                        task = TaskList.Delivering;
+                        target = null;
+                    }
+                    else
+                    {
+                        task = TaskList.Idle;
+                        target = null;
+                    }
                 }
             }
             if (heldResource >= maxHeldResources)
@@ -246,6 +255,43 @@ public class ObjectInfo : MonoBehaviour
         }
         #endregion
 
+        if (objectType != ObjectTypes.Node)
+        {
+            if (health <= 0)
+            {
+                Destroy(gameObject);
+            }
+        }
+        if (objectType == ObjectTypes.Unit) { 
+            if (transform.position == agent.destination && task == TaskList.Moving)
+            {
+                task = TaskList.Idle;
+            }
+        }
+        if (task == TaskList.Attacking)
+        {
+            if (target)
+            {
+                distToTarget = Vector3.Distance(target.transform.position, transform.position);
+
+                if (distToTarget >= range)
+                {
+                    canAttack = false;
+                    agent.destination = target.transform.position;
+                }
+                else if (distToTarget <= range)
+                {
+                    canAttack = true;
+                }
+            }
+        }
+        
+        if (!target)
+        {
+            canAttack = false;
+            task = TaskList.Idle;
+        }
+
         if (objectType == ObjectTypes.Node && availableResource <= 0)
         {
                 Destroy(gameObject);
@@ -256,11 +302,9 @@ public class ObjectInfo : MonoBehaviour
             RightClick();
         }
 
-        selectionIndidcator.SetActive(isSelected);
-        
-        iconCam.SetActive(isPrimary);
+        selectionIndidcator.SetActive(!isSelected);
 
-        
+        iconCam.SetActive(isPrimary);
     }
     public void ResourceGeather()
     {
@@ -323,14 +367,13 @@ public class ObjectInfo : MonoBehaviour
                 drops = null;
                 task = TaskList.Delivering;
             }
-            else if(hit.collider.tag == "Seelctable")
+            else if(hit.collider.tag == "Selectable")
             {
-                ObjectInfo targetInfo = hit.collider.GetComponent<ObjectInfo>();
+                ObjectInfo hitObject = hit.collider.GetComponent<ObjectInfo>();
 
-                if (!targetInfo.isPlayerObject)
+                if(hitObject.isPlayerObject == false && hitObject.isAllyObject == false)
                 {
-                    GetComponent<ObjectInfo>().target = targetInfo.gameObject;
-                    Move(agent, hit);
+                    target = hit.collider.gameObject;
                     task = TaskList.Attacking;
                 }
             }
@@ -356,6 +399,15 @@ public class ObjectInfo : MonoBehaviour
         //GetComponent<NavMeshAgent>().enabled = false;
     }
 
+    private void OnEnable()
+    {
+        InputManager.selectedObjects.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        InputManager.selectedObjects.Remove(this);
+    }
     IEnumerator OneTick()
     {
         while (true)
@@ -372,6 +424,23 @@ public class ObjectInfo : MonoBehaviour
                 {
                     heldResource++;
                 }
+            }
+        }
+    }
+
+    IEnumerator AttackTick()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(attackSpeed);
+
+            if (canAttack)
+            {
+                ObjectInfo targetInfo = target.GetComponent<ObjectInfo>();
+
+                targetInfo.health -= Mathf.Round(patk * (1 - (targetInfo.pdef * 0.05f)));
+
+                Debug.Log(targetInfo.health);
             }
         }
     }
