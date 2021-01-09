@@ -6,23 +6,19 @@ using System.Linq;
 
 public class InputManager : MonoBehaviour
 {
-    float panSpeed = 5;
-    float panDetect = 30;
+    public float panSpeed;
+    public float rotateSpeed;
+    public float rotateAmount;
 
-    float panBorderSpeed = 0.5f;
-    float scrollSpeed = 1f;
-    //--------------------------------------
+    private Quaternion rotation;
+
+    private float panDetect = 20.0f;
+    private float minHeight = 10.0f;
+    private float maxHeight = 50.0f;
 
     public static List<ObjectInfo> selectedObjects = new List<ObjectInfo>();
 
-    public Canvas canvas;
-
-    public Image selectionBox;
-
-    [SerializeField] LayerMask mask;
-
     public bool hasPrimary;
-    public bool hasTolTip;
 
     public CanvasGroup ObjectPanel;
 
@@ -30,7 +26,6 @@ public class InputManager : MonoBehaviour
      private Vector2 boxEnd;
 
     public GameObject primaryObject;
-    public GameObject tolTip;
 
     private Rect selectBox;
     public Texture boxTex;
@@ -38,48 +33,21 @@ public class InputManager : MonoBehaviour
     public ObjectInfo selectedInfo;
     private GameObject[] units;
 
-
-    private Vector3 startPos;
-    private BoxCollider worldCollider;
-    private RectTransform RT;
-    private bool isSelecting;
-
-    //------------------------------
-
-    // public static List<ObjectInfo> selectedObjects = new List<ObjectInfo>();
-    // public GameObject selectedObject;
-    private Quaternion rotation;
-
     // Start is called before the first frame update
     void Start()
     {
         rotation = Camera.main.transform.rotation;
     }
-
-    private void Awake()
-    {
-        if (canvas == null)
-        {
-            canvas = FindObjectOfType<Canvas>();
-        }
-
-        if (selectionBox != null)
-        {
-            RT = selectionBox.GetComponent<RectTransform>();
-            RT.pivot = Vector2.one * 0.5f;
-            RT.anchorMin = Vector2.one * 0.5f;
-            RT.anchorMax = Vector2.one * 0.5f;
-            selectionBox.gameObject.SetActive(false);
-        }
-    }
     // Update is called once per frame
     void Update()
     {
         MoveCamera();
-        hasPrimary = primaryObject;
-        hasTolTip = tolTip;
+        RotateCamera();
 
-        #region boxselect old
+        hasPrimary = primaryObject;
+        units = GameObject.FindGameObjectsWithTag("Selectable");
+
+        #region  mouse
         if (Input.GetMouseButton(0) && boxStart == Vector2.zero)
         {
             boxStart = Input.mousePosition;
@@ -88,21 +56,21 @@ public class InputManager : MonoBehaviour
         {
             boxEnd = Input.mousePosition;
         }
+        if (Input.GetMouseButtonDown(0))
+        {
+            LeftClick();
+        }
 
         if (Input.GetMouseButtonUp(0))
         {
             boxStart = Vector2.zero;
             boxEnd = Vector2.zero;
 
-            units = GameObject.FindGameObjectsWithTag("Selectable");
-            MultiSelect();
-
+             MultiSelect();
         }
         selectBox = new Rect(boxStart.x, Screen.height - boxStart.y, boxEnd.x - boxStart.x, -1 * ((Screen.height - boxStart.y) - (Screen.height - boxEnd.y)));
         #endregion
-
-
-
+        #region gui-select
         if (primaryObject != null)
         {
             ObjectPanel.alpha = 1;
@@ -115,89 +83,8 @@ public class InputManager : MonoBehaviour
             ObjectPanel.blocksRaycasts = false;
             ObjectPanel.interactable = false;
         }
-
-        if (Input.GetKeyDown(KeyCode.Space)) // resetowanie kamery
-        {
-            Camera.main.transform.rotation = rotation;
-        }
+        #endregion
     }
-    //    // obsługa myszy
-
-    //    if (Input.GetMouseButtonDown(0))
-    //    {
-    //        LeftClick();
-    //    }
-
-    //    if (Input.GetMouseButtonUp(0))
-    //    {
-    //        isSelecting = false;
-    //    }
-
-    //    selectionBox.gameObject.SetActive(isSelecting);
-
-    //    if (isSelecting)
-    //    {
-    //        Bounds bounds = new Bounds();
-    //        bounds.center = Vector3.Lerp(startPos, Input.mousePosition, 0.5f);
-    //        bounds.size = new Vector3(
-    //            Mathf.Abs(startPos.x - Input.mousePosition.x),
-    //            Mathf.Abs(startPos.y - Input.mousePosition.y),
-    //            0
-    //            );
-    //        RT.position = bounds.center;
-    //        RT.sizeDelta = canvas.transform.InverseTransformVector(bounds.size);
-
-    //        foreach (ObjectInfo selectable in selectedObjects)
-    //        {
-    //            if (selectable.isUnit && selectable.isPlayerObject)
-    //            {
-    //                Vector3 screenPos = Camera.main.WorldToScreenPoint(selectable.transform.position);
-    //                screenPos.z = 0;
-    //                UpdateSelection(selectable, bounds.Contains(screenPos));
-    //            }
-    //        }
-    //    }
-    //}
-    //public void UpdateSelection(ObjectInfo selectedObject, bool value)
-    //{
-    //    if (selectedObject.isSelected != value)
-    //    {
-    //        if (value == false)
-    //        {
-    //            if (hasPrimary)
-    //            {
-    //                selectedObject.isPrimary = value;
-    //                primaryObject = null;
-    //                hasPrimary = value;
-    //            }
-    //            else
-    //            {
-    //                if (!hasPrimary)
-    //                {
-    //                    selectedObject.isPrimary = value;
-    //                    primaryObject = selectedObject.gameObject;
-    //                    hasPrimary = value;
-    //                    selectedInfo = primaryObject.GetComponent<ObjectInfo>();
-    //                }
-    //            }
-
-    //            selectedObject.isSelected = value;
-    //        }
-    //    }
-    //}
-
-    //List<ObjectInfo> GetSelected()
-    //{
-    //    return new List<ObjectInfo>(selectedObjects.Where(x => x.isSelected));
-    //}
-
-    //public void ClearSelection()
-    //{
-    //    selectedObjects.ForEach(x => x.isSelected = false);
-    //    selectedObjects.ForEach(x => x.isPrimary = false);
-    //}
-
-    #region multisel old
     public void MultiSelect()
     {
         foreach (GameObject unit in units)
@@ -217,159 +104,91 @@ public class InputManager : MonoBehaviour
                 }
             }
         }
-        //boxStart = Vector2.zero;
-        //boxEnd = Vector2.zero;
     }
-    #endregion
-
-    #region old Left click
     public void LeftClick()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit))
+   
+        if (Physics.Raycast(ray, out hit, 100))
         {
-            //if (hit.collider.tag == "Ground")
-            //{
-            //    selectedInfo.isSelected = false;
-            //    selectedObject = null;
-            //    Debug.Log("Nie wybrano");
-            //}
             if (hit.collider.tag == "Ground")
             {
-                selectedInfo.isSelected = false;
-                selectedInfo.isPrimary = false;
-                primaryObject = null;
-
-                units = GameObject.FindGameObjectsWithTag("Selectable");
-
+                Debug.Log("Ziemia");
                 foreach (GameObject unit in units)
                 {
                     unit.GetComponent<ObjectInfo>().isSelected = false;
-                }
-                selectedInfo = null;
+                    unit.GetComponent<ObjectInfo>().isPrimary = false;
+                    primaryObject = null;
+                }  
             }
-
-            //else if (hit.collider.tag == "Selectable")
-            //{
-            //    selectedObject = hit.collider.gameObject;
-            //    selectedInfo = selectedObject.GetComponent<ObjectInfo>();
-
-            //    selectedInfo.isSelected = true;
-            //    Debug.Log("wybrano" + selectedInfo.objectName);
-            //}
             else if (hit.collider.tag == "Selectable")
             {
-                units = GameObject.FindGameObjectsWithTag("Selectable");
-
                 foreach (GameObject unit in units)
                 {
-                    unit.GetComponent<ObjectInfo>().isSelected = false;
+                    if (!hasPrimary)
+                    {
+                        primaryObject = unit;
+                        unit.GetComponent<ObjectInfo>().isPrimary = true;
+                    }
+                    unit.GetComponent<ObjectInfo>().isSelected = true;
                 }
-                if (hasPrimary)
-                {
-                    selectedInfo.isSelected = false;
-                    selectedInfo.isPrimary = false;
-                    primaryObject = null;
-                }
-
-                primaryObject = hit.collider.gameObject;
-
-                selectedInfo = primaryObject.GetComponent<ObjectInfo>();
-
-                selectedInfo.isSelected = true;
-                selectedInfo.isPrimary = true;
-
-                // Debug.Log("wybrano" + selectedInfo.objectName);
             }
         }
     }
-    #endregion
-    //public void LeftClick()
-    //{
-    //     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-    //     RaycastHit hit;
-
-    //    if(Physics.Raycast(ray, out hit))
-    //    {
-    //        ObjectInfo OI = hit.collider.GetComponent<ObjectInfo>();
-
-    //        if(OI != null)
-    //        {
-    //            if (Input.GetKey(KeyCode.LeftShift))
-    //            {
-    //                UpdateSelection(OI, !OI.isSelected);
-    //            }
-    //            else
-    //            {
-    //                ClearSelection();
-    //                UpdateSelection(OI, true);
-    //            }
-    //        }
-    //    }
-    //    startPos = Input.mousePosition;
-    //    isSelecting = true;
-    //}
-
     void MoveCamera()
     {
-        float CamPosX = Camera.main.transform.position.x;
-        float CamPosY = Camera.main.transform.position.y;
-        float CamPosZ = Camera.main.transform.position.z;
+        float moveX = Camera.main.transform.position.x;
+        float moveY = Camera.main.transform.position.y;
+        float moveZ = Camera.main.transform.position.z;
 
         float xPos = Input.mousePosition.x;
         float yPos = Input.mousePosition.y;
 
-        Vector3 forwardMove = new Vector3(0, 0, 0);
-        Vector3 lateralMove = new Vector3(0, 0, 0);
-
-        if (Input.GetKey(KeyCode.W))
+        if (Input.GetKey(KeyCode.A) || xPos > 0 && xPos < panDetect)
         {
-            forwardMove = Camera.main.transform.forward * panSpeed * CamPosY * Time.deltaTime;
-
-            //moveZ += panSpeed * moveY  * Time.deltaTime;
-        }
-        else if (Input.GetKey(KeyCode.S))
-        {
-            forwardMove = -Camera.main.transform.forward * panSpeed * CamPosY * Time.deltaTime;
-        }
-        else if (yPos < Screen.height && yPos > Screen.height - panDetect)
-        {
-            forwardMove = Camera.main.transform.forward * panBorderSpeed * CamPosY * Time.deltaTime;
-        }
-        else if (yPos > 0 && yPos < panDetect)
-        {
-            forwardMove = -Camera.main.transform.forward * panBorderSpeed * CamPosY * Time.deltaTime;
+            moveX -= panSpeed * Time.deltaTime;
         }
 
-        if (Input.GetKey(KeyCode.A))
-        { 
-            lateralMove = -Camera.main.transform.right * panSpeed * CamPosY * Time.deltaTime; 
-        }
-        else if (Input.GetKey(KeyCode.D)) 
+        if (Input.GetKey(KeyCode.D) || xPos < Screen.width && xPos > Screen.width - panDetect)
         {
-            lateralMove = Camera.main.transform.right * panSpeed * CamPosY * Time.deltaTime;
-        }
-        else if (xPos > 0 && xPos < panDetect)
-        {
-            lateralMove = -Camera.main.transform.right * panBorderSpeed * CamPosY * Time.deltaTime;
-        }
-        else if (xPos < Screen.width && xPos > Screen.width - panDetect)
-        {
-            lateralMove = Camera.main.transform.right * panBorderSpeed * CamPosY * Time.deltaTime;
+            moveX += panSpeed * Time.deltaTime;
         }
 
-        CamPosY -= Input.GetAxis("Mouse ScrollWheel") * (scrollSpeed * 100) * (CamPosY / 40); 
-        forwardMove.y = 0;
-        Vector3 move = lateralMove + forwardMove;
+        if (Input.GetKey(KeyCode.W) || yPos < Screen.height && yPos > Screen.height - panDetect)
+        {
+            moveZ += panSpeed * Time.deltaTime;
+        }
+        else if (Input.GetKey(KeyCode.S) || yPos > 0 && yPos < panDetect)
+        {
+            moveZ -= panSpeed * Time.deltaTime;
+        }
 
-        CamPosY = Mathf.Clamp(CamPosY + move.y, 10, 40);
-        CamPosX = Mathf.Clamp(CamPosX + move.x, -100, 100);
-        CamPosZ = Mathf.Clamp(CamPosZ + move.z, -100, 100);
+        moveY -= Input.GetAxis("Mouse ScrollWheel") * (panSpeed * 3);
 
-        Vector3 newPos = new Vector3(CamPosX, CamPosY, CamPosZ);
+        moveY = Mathf.Clamp(moveY, minHeight, maxHeight);
+
+
+        Vector3 newPos = new Vector3(moveX, moveY, moveZ);
+
         Camera.main.transform.position = newPos;
+    }
+    void RotateCamera()
+    {
+        Vector3 origin = Camera.main.transform.eulerAngles;
+        Vector3 destintion = origin;
+
+        if (Input.GetMouseButton(2))
+        {
+            destintion.x -= Input.GetAxis("Mouse Y") * rotateAmount;
+            destintion.y += Input.GetAxis("Mouse X") * rotateAmount;
+        }
+
+        if (destintion != origin)
+        {
+            Camera.main.transform.eulerAngles = Vector3.MoveTowards(origin, destintion, rotateSpeed * Time.deltaTime);
+        }
+
     }
 
     void OnGUI()

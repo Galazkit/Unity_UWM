@@ -77,8 +77,11 @@ public class ObjectInfo : MonoBehaviour
             StartCoroutine(OneTick());
         }
 
-        agent = GetComponent<NavMeshAgent>();
-        iconCam = GetComponentInChildren<Camera>().gameObject;
+        if (isUnit)
+        {
+            agent = GetComponent<NavMeshAgent>();
+            iconCam = GetComponentInChildren<Camera>().gameObject;
+        }
     }
 
     void Update()
@@ -285,26 +288,25 @@ public class ObjectInfo : MonoBehaviour
                 }
             }
         }
-        
         if (!target)
         {
             canAttack = false;
             task = TaskList.Idle;
         }
-
         if (objectType == ObjectTypes.Node && availableResource <= 0)
         {
                 Destroy(gameObject);
         }
-
         if (Input.GetMouseButtonDown(1) && GetComponent<ObjectInfo>().isSelected)
         {
             RightClick();
         }
 
-        selectionIndidcator.SetActive(!isSelected);
-
-        iconCam.SetActive(isPrimary);
+        if (isUnit)
+        {
+            selectionIndidcator.SetActive(isSelected);
+            iconCam.SetActive(isPrimary);
+        }
     }
     public void ResourceGeather()
     {
