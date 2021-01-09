@@ -115,24 +115,38 @@ public class InputManager : MonoBehaviour
             if (hit.collider.tag == "Ground")
             {
                 Debug.Log("Ziemia");
-                foreach (GameObject unit in units)
-                {
-                    unit.GetComponent<ObjectInfo>().isSelected = false;
-                    unit.GetComponent<ObjectInfo>().isPrimary = false;
-                    primaryObject = null;
-                }  
+                //foreach (GameObject unit in units)
+                //{
+                //    unit.GetComponent<ObjectInfo>().isSelected = false;
+                //    unit.GetComponent<ObjectInfo>().isPrimary = false;
+                //    primaryObject = null;
+                //    selectedInfo = null;
+                //}
+                selectedInfo.isSelected = false;
+                selectedInfo.isPrimary = false;
+                selectedInfo = null;
+                primaryObject = null;
+                units = null;
             }
             else if (hit.collider.tag == "Selectable")
             {
-                foreach (GameObject unit in units)
+                //foreach (GameObject unit in units)
+                //{
+                //    if (!hasPrimary)
+                //    {
+                //        primaryObject = unit;
+                //        unit.GetComponent<ObjectInfo>().isPrimary = true;
+                //    }
+                //    unit.GetComponent<ObjectInfo>().isSelected = true;
+                //}
+
+                primaryObject = hit.collider.gameObject;
+                selectedInfo = primaryObject.GetComponent<ObjectInfo>();
+                if (!hasPrimary)
                 {
-                    if (!hasPrimary)
-                    {
-                        primaryObject = unit;
-                        unit.GetComponent<ObjectInfo>().isPrimary = true;
-                    }
-                    unit.GetComponent<ObjectInfo>().isSelected = true;
+                    selectedInfo.isPrimary = true;
                 }
+                selectedInfo.isSelected = true;
             }
         }
     }
