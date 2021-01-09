@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: de31a100465fdf04991e8b0da810efa8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - primary: {instanceID: 0}
+  - UnitPanel: {fileID: 2217130579132235746, guid: 38f30523c4a8f2941947f5ea6a64e6d6,
+      type: 3}
+  - nameDisp: {instanceID: 0}
+  - HB: {instanceID: 0}
+  - healthDisp: {instanceID: 0}
+  - patkDisp: {instanceID: 0}
+  - pdefDisp: {instanceID: 0}
+  - rankDisp: {instanceID: 0}
+  - killDisp: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
