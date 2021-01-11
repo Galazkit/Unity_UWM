@@ -57,12 +57,23 @@ public class ObjectInfo : MonoBehaviour
     public float patk;
     public float pdef;
     public float kills;
+    //-----------------------
+    public Slider HB;
+    public Text nameDisp;
+    public Text healthDisp;
+    public Text patkDisp;
+    public Text pdefDisp;
+    public Text rankDisp;
+    public Text killDisp;
+
+    //----------------------
     public float distToTarget;
 
     public float attackSpeed;
     public float range;
 
     private NavMeshAgent agent;
+
 
     //internal bool isSelected { get; set; }
 
@@ -86,6 +97,7 @@ public class ObjectInfo : MonoBehaviour
 
     void Update()
     {
+
         #region Units Functions
         if (isWorker)
         {
@@ -306,6 +318,19 @@ public class ObjectInfo : MonoBehaviour
         {
             selectionIndidcator.SetActive(isSelected);
             iconCam.SetActive(isPrimary);
+            
+            if (isPrimary)
+            {
+                HB.maxValue = maxHealth;
+                HB.value = health;
+
+                nameDisp.text = objectName;
+                healthDisp.text = "HP: " + health;
+                patkDisp.text = "PATK: " + patk;
+                pdefDisp.text = "PDEF: " + pdef;
+                rankDisp.text = "" + rank;
+                killDisp.text = "" + kills;
+            }
         }
     }
     public void ResourceGeather()

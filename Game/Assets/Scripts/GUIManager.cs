@@ -17,6 +17,7 @@ public class GUIManager : MonoBehaviour
     public Text rankDisp;
     public Text killDisp;
 
+
     // Start is called before the first frame update
     void Start()
     {
@@ -24,20 +25,20 @@ public class GUIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        primary = GameObject.FindGameObjectWithTag("Player").GetComponent<InputManager>().selectedInfo;
+      //  primary = GameObject.FindGameObjectWithTag("Player").GetComponent<InputManager>().selectedInfo;
 
-        if (primary)
-        {
-            Debug.Log("jest");
-            HB.maxValue = primary.maxHealth;
-            HB.value = primary.health;
+        //if (primary)
+        //{
+        //    Debug.Log("jest");
+        //    HB.maxValue = primary.maxHealth;
+        //    HB.value = primary.health;
 
-            nameDisp.text = primary.objectName;
-            healthDisp.text = "HP: " + primary.health;
-            patkDisp.text = "PATK: " + primary.patk;
-            pdefDisp.text = "PDEF: " + primary.pdef;
-            rankDisp.text = "" + primary.rank;
-            killDisp.text = "Kills: " + primary.kills;
-        }
+        //    nameDisp.text = primary.objectName;
+        //    healthDisp.text = "HP: " + primary.health;
+        //    patkDisp.text = "PATK: " + primary.patk;
+        //    pdefDisp.text = "PDEF: " + primary.pdef;
+        //    rankDisp.text = "" + primary.rank;
+        //    killDisp.text = "Kills: " + primary.kills;
+        //}
     }
 }
