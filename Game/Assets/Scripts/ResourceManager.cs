@@ -19,6 +19,8 @@ public class ResourceManager : MonoBehaviour
     public Text ironDisp;
     public Text populationDisp;
 
+    private GameObject[] popCount;
+    private int popCountInt;
 
     // Start is called before the first frame update
     void Start()
@@ -29,9 +31,12 @@ public class ResourceManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        popCount = GameObject.FindGameObjectsWithTag("Selectable");
+        popCountInt = popCount.Length;
+
         woodDisp.text = "" + wood + "/" + maxWood;
         stoneDisp.text = "" + stone + "/" + maxStone;
         ironDisp.text = "" + iron + "/" + maxIron;
-        populationDisp.text = "" + population + "/" + maxPopulation;
+        populationDisp.text = "" + popCountInt + "/" + maxPopulation;
     }
 }

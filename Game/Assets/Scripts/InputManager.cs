@@ -47,6 +47,7 @@ public class InputManager : MonoBehaviour
         hasPrimary = primaryObject;
         units = GameObject.FindGameObjectsWithTag("Selectable");
 
+
         #region  mouse
         if (Input.GetMouseButton(0) && boxStart == Vector2.zero)
         {
@@ -147,6 +148,7 @@ public class InputManager : MonoBehaviour
                     selectedInfo.isPrimary = true;
                 }
                 selectedInfo.isSelected = true;
+
             }
         }
     }
